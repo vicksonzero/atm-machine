@@ -26,7 +26,7 @@ public class BPlayerInput : MonoBehaviour
     private void Awake()
     {
         _mainCamera = Camera.main;
-        if (!stackManagement) stackManagement = FindObjectOfType<StackManagement>();
+        if (!stackManagement) stackManagement = FindObjectOfType<StackManagement>(true);
         stackManagement.enabled = false;
     }
 

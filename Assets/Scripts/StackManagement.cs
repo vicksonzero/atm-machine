@@ -51,12 +51,22 @@ public class StackManagement : MonoBehaviour
         backdrop.GetComponentInChildren<Collider2D>().enabled = false;
     }
 
+    private void OnEnable()
+    {
+        // do nothing
+    }
+
 
     public bool ShowModal(Stack stack)
     {
         if (currentStack != null) return false;
         currentStack = stack;
         currentStackStartPos = currentStack.transform.position;
+
+        foreach (var randomAppearance in currentStack.GetComponentsInChildren<RandomAppearance>())
+        {
+            randomAppearance.RandomizeLocal();
+        }
 
         var myTransform = transform;
 

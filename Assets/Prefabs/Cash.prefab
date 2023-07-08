@@ -92,6 +92,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1189328414679655739}
   - component: {fileID: 4072760195159701612}
+  - component: {fileID: 7842334282197713653}
   - component: {fileID: 1189328414679655738}
   - component: {fileID: 5671793894682229590}
   m_Layer: 6
@@ -133,6 +134,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemType: {fileID: 11400000, guid: 2679dc5f03fbc034d8f2a4480c09883d, type: 2}
   dropUi: {fileID: 2996654156772763461}
+--- !u!114 &7842334282197713653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1189328414679655741}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0992d33aebe054a41bb219c91adebd38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxRotate: 2.5
+  maxDisplace: 1
 --- !u!210 &1189328414679655738
 SortingGroup:
   m_ObjectHideFlags: 0
@@ -765,6 +780,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7110449464402414720}
   - component: {fileID: 7110449464402414721}
+  - component: {fileID: 6106363766268165525}
   m_Layer: 6
   m_Name: Cash
   m_TagString: Untagged
@@ -837,6 +853,26 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &6106363766268165525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7110449464402414727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81406e33474d5b342b737260569db087, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minHue: 0.35277778
+  maxHue: 0.3527778
+  minSat: 0.37
+  maxSat: 0.5
+  minVal: 0.41
+  maxVal: 0.51
+  minAlpha: 1
+  maxAlpha: 1
 --- !u!1 &7155167721736509674
 GameObject:
   m_ObjectHideFlags: 0
