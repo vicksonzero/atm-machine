@@ -7,9 +7,12 @@ public class Stack : MonoBehaviour
     public ItemTypeSo itemType;
     public ItemTypeSo[] acceptsTypes;
 
+    public Transform stack2;
+
     // Update is called once per frame
-    void SortChildren()
+    private void SortChildren()
     {
+        if (stack2 != null) stack2.SetAsLastSibling();
         // print("SortChildren");
         thickness = 0f;
         foreach (Transform child in transform.Cast<Transform>().OrderBy(t => t.GetSiblingIndex()))
@@ -25,6 +28,11 @@ public class Stack : MonoBehaviour
 
     private void OnTransformChildrenChanged()
     {
+        if (itemType == null)
+        {
+            itemType = GetComponentInChildren<Item>().itemType;
+            if (acceptsTypes.Length == 0) acceptsTypes = new[] { itemType };
+        }
         SortChildren();
     }
 
@@ -37,7 +45,8 @@ public class Stack : MonoBehaviour
     {
         foreach (Transform child in fromStack.transform.Cast<Transform>().OrderBy(t => t.GetSiblingIndex()))
         {
-            child.SetParent(transform);
+            if (child != fromStack.stack2.transform)
+                child.SetParent(transform);
         }
     }
 }

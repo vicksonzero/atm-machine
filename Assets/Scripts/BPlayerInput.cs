@@ -27,15 +27,16 @@ public class BPlayerInput : MonoBehaviour
     {
         _mainCamera = Camera.main;
         if (!stackManagement) stackManagement = FindObjectOfType<StackManagement>();
+        stackManagement.enabled = false;
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
         pointerClick.Enable();
         pointerClick.performed += PointerPressed;
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
         pointerClick.performed -= PointerPressed;
         pointerClick.Disable();
@@ -50,15 +51,22 @@ public class BPlayerInput : MonoBehaviour
         {
             var draggable = hit.collider.GetComponentInParent<Draggable>();
             if (draggable != null && draggable.enabled)
-                StartCoroutine(DoDrag(draggable));
+            {
+                StartCoroutine(DoDragCycle(draggable));
+            }
+
+            if (stackManagement.enabled)
+            {
+                stackManagement.HandlePointerPressed(context, hit, pointerClick);
+            }
         }
     }
 
-    private IEnumerator DoDrag(Draggable draggable)
+    private IEnumerator DoDragCycle(Draggable draggable)
     {
-        #region Start DoDrag
+        #region Start DoDragCycle
 
-        print("Start DoDrag");
+        print("Start DoDragCycle");
         var offset = draggable.transform.position
                      - _mainCamera.ScreenToWorldPoint(Pointer.current.position.ReadValue());
 
@@ -80,13 +88,13 @@ public class BPlayerInput : MonoBehaviour
 
         #endregion
 
-        #region Update DoDrag
+        #region Update DoDragCycle
 
         do
         {
             var pointerPosition = _mainCamera.ScreenToWorldPoint(Pointer.current.position.ReadValue());
             var dist = Vector2.Distance(draggable.transform.position - offset, pointerPosition);
-            // print($"DoDrag Prep {dist}");
+            // print($"DoDragCycle Prep {dist}");
             if (!isDragging && dist < minDragDist)
             {
                 // do nothing
@@ -95,7 +103,7 @@ public class BPlayerInput : MonoBehaviour
             {
                 if (!isDragging) print("Start dragging");
                 isDragging = true;
-                print("Update DoDrag");
+                print("Update DoDragCycle");
                 var point = offset + pointerPosition;
 
 
@@ -119,9 +127,9 @@ public class BPlayerInput : MonoBehaviour
 
         #endregion
 
-        #region End DoDrag
+        #region End DoDragCycle
 
-        print("End DoDrag");
+        print("End DoDragCycle");
         if (hasTargetJoint)
         {
             targetJoint2D.enabled = false;
@@ -174,7 +182,7 @@ public class BPlayerInput : MonoBehaviour
         }
     }
 
-    Droppable GetClosest2D(Draggable draggable, Droppable[] droppables, out float minDist)
+    private Droppable GetClosest2D(Draggable draggable, Droppable[] droppables, out float minDist)
     {
         Droppable tMin = null;
         minDist = Mathf.Infinity;
@@ -196,6 +204,7 @@ public class BPlayerInput : MonoBehaviour
     private void DoClick(Draggable draggable)
     {
         print("DoClick");
+        stackManagement.enabled = true;
         stackManagement.ShowModal(draggable.GetComponent<Stack>());
         draggable.enabled = false;
     }
