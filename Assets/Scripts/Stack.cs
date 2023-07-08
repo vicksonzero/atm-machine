@@ -10,7 +10,7 @@ public class Stack : MonoBehaviour
     // Update is called once per frame
     void SortChildren()
     {
-        print("SortChildren");
+        // print("SortChildren");
         thickness = 0f;
         foreach (Transform child in transform.Cast<Transform>().OrderBy(t => t.GetSiblingIndex()))
         {

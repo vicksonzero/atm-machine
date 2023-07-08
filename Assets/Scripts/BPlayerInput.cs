@@ -19,10 +19,14 @@ public class BPlayerInput : MonoBehaviour
 
     private Droppable droppableTarget;
 
+    [SerializeField]
+    private StackManagement stackManagement;
+
 
     private void Awake()
     {
         _mainCamera = Camera.main;
+        if (!stackManagement) stackManagement = FindObjectOfType<StackManagement>();
     }
 
     void OnEnable()
@@ -45,7 +49,7 @@ public class BPlayerInput : MonoBehaviour
         if (hit.collider != null)
         {
             var draggable = hit.collider.GetComponentInParent<Draggable>();
-            if (draggable != null)
+            if (draggable != null && draggable.enabled)
                 StartCoroutine(DoDrag(draggable));
         }
     }
@@ -191,5 +195,8 @@ public class BPlayerInput : MonoBehaviour
 
     private void DoClick(Draggable draggable)
     {
+        print("DoClick");
+        stackManagement.ShowModal(draggable.GetComponent<Stack>());
+        draggable.enabled = false;
     }
 }

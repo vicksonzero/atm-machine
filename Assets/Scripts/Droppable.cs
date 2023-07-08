@@ -11,4 +11,8 @@ public class Droppable : MonoBehaviour
         if (!dropUi) dropUi = GetComponentInChildren<Item>().dropUi;
         dropUi.SetActive(value);
     }
+    private void OnEnable()
+    {
+        // do nothing
+    }
 }
