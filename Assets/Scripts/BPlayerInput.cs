@@ -8,14 +8,17 @@ using UnityEngine.Serialization;
 
 public class BPlayerInput : MonoBehaviour
 {
-    [FormerlySerializedAs("mouseClick")]
     [SerializeField]
     private InputAction pointerClick;
 
     private Camera _mainCamera;
     private readonly WaitForFixedUpdate _waitForFixedUpdate = new WaitForFixedUpdate();
     [SerializeField]
-    private float minDropDist = 1;
+    private float minDragDist = 2;
+    [SerializeField]
+    private bool isDragging;
+    [SerializeField]
+    private float minDropDist = 2;
 
     private Droppable droppableTarget;
 
@@ -80,23 +83,37 @@ public class BPlayerInput : MonoBehaviour
 
         do
         {
-            print("Update DoDrag");
-            var point = offset + _mainCamera.ScreenToWorldPoint(Pointer.current.position.ReadValue());
-
-            if (hasTargetJoint)
+            var pointerPosition = _mainCamera.ScreenToWorldPoint(Pointer.current.position.ReadValue());
+            var dist = Vector2.Distance(draggable.transform.position - offset, pointerPosition);
+            // print($"DoDrag Prep {dist}");
+            if (!isDragging && dist < minDragDist)
             {
-                targetJoint2D.target = point;
-                OnDragging(draggable, droppables);
-                yield return _waitForFixedUpdate; // for physics
+                // do nothing
             }
             else
             {
-                // point.z = draggable.transform.position.z;
-                draggable.transform.position = point;
-                OnDragging(draggable, droppables);
+                if (!isDragging) print("Start dragging");
+                isDragging = true;
+                print("Update DoDrag");
+                var point = offset + pointerPosition;
 
-                yield return null;
+
+                if (hasTargetJoint)
+                {
+                    targetJoint2D.target = point;
+                }
+                else
+                {
+                    // point.z = draggable.transform.position.z;
+                    draggable.transform.position = point;
+                }
+
+                OnDragging(draggable, droppables);
             }
+
+            yield return hasTargetJoint
+                ? _waitForFixedUpdate // for physics
+                : null;
         } while (pointerClick.ReadValue<float>() != 0);
 
         #endregion
@@ -111,9 +128,14 @@ public class BPlayerInput : MonoBehaviour
         if (droppableTarget != null)
         {
             droppableTarget.ToggleDropUi(false);
-            Drop(draggable, droppableTarget);
+            DoDrop(draggable, droppableTarget);
         }
         droppableTarget = null;
+        if (!isDragging)
+        {
+            DoClick(draggable);
+        }
+        isDragging = false;
 
         #endregion
     }
@@ -122,7 +144,7 @@ public class BPlayerInput : MonoBehaviour
     {
         var closestDroppable = GetClosest2D(draggable, droppables, out var dist);
 
-        print($"OnDragging {dist}");
+        // print($"OnDragging {dist}");
         if (dist < minDropDist)
         {
             if (droppableTarget != closestDroppable)
@@ -139,7 +161,7 @@ public class BPlayerInput : MonoBehaviour
         }
     }
 
-    private void Drop(Draggable draggable, Droppable droppable)
+    private void DoDrop(Draggable draggable, Droppable droppable)
     {
         var fromStack = draggable.GetComponent<Stack>();
         var toStack = droppable.GetComponent<Stack>();
@@ -168,5 +190,9 @@ public class BPlayerInput : MonoBehaviour
             }
         }
         return tMin;
+    }
+
+    private void DoClick(Draggable draggable)
+    {
     }
 }
