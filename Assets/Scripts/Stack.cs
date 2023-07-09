@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using UnityEngine;
 
@@ -8,6 +9,14 @@ public class Stack : MonoBehaviour
     public ItemTypeSo[] acceptsTypes;
 
     public Transform stack2;
+
+    private void Start()
+    {
+        if (itemType == null)
+        {
+            InitItemType();
+        }
+    }
 
     // Update is called once per frame
     private void SortChildren()
@@ -30,10 +39,22 @@ public class Stack : MonoBehaviour
     {
         if (itemType == null)
         {
-            itemType = GetComponentInChildren<Item>().itemType;
-            if (acceptsTypes.Length == 0) acceptsTypes = new[] { itemType };
+            InitItemType();
         }
         SortChildren();
+    }
+
+    private void InitItemType()
+    {
+        var item = GetComponentInChildren<Item>();
+        if (item == null) return;
+        itemType = item.itemType;
+        if (acceptsTypes.Length == 0) acceptsTypes = new[] { itemType };
+        if (stack2)
+        {
+            stack2.localPosition = item.stack2Transform.localPosition;
+            stack2.localRotation = item.stack2Transform.localRotation;
+        }
     }
 
     private void OnValidate()

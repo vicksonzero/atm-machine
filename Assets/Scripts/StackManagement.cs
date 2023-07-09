@@ -41,6 +41,8 @@ public class StackManagement : MonoBehaviour
     [Tooltip("In seconds")]
     public float backdropFadeOutDuration = 0.5f;
 
+    private bool _modalIsTransitioning;
+
     private Camera _mainCamera;
 
     private void Awake()
@@ -62,6 +64,7 @@ public class StackManagement : MonoBehaviour
         if (currentStack != null) return false;
         currentStack = stack;
         currentStackStartPos = currentStack.transform.position;
+        var seq = DOTween.Sequence();
 
         foreach (var randomAppearance in currentStack.GetComponentsInChildren<RandomAppearance>())
         {
@@ -82,16 +85,23 @@ public class StackManagement : MonoBehaviour
         stackTransform.localPosition = stackNewPos;
         stackNewPos.x = 0;
         stackNewPos.y = 0;
-        stack.transform.DOLocalMove(stackNewPos, stackMoveInDuration);
+        _modalIsTransitioning = true;
+        seq.Append(stack.transform.DOLocalMove(stackNewPos, stackMoveInDuration));
 
         if (stack.TryGetComponent<Draggable>(out var draggable))
         {
             draggable.enabled = false;
         }
 
-        if (backdropTween != null && backdropTween.IsPlaying()) backdropTween.Kill();
-        backdropTween = backdrop.DOFade(1, backdropFadeInDuration).From(0);
+        if (backdropTween != null && backdropTween.IsActive())
+        {
+            backdropTween.Kill();
+            backdropTween = null;
+        }
+        seq.Join(backdropTween = backdrop.DOFade(1, backdropFadeInDuration).From(0));
         backdrop.GetComponentInChildren<Collider2D>().enabled = true;
+
+        seq.OnComplete(() => _modalIsTransitioning = false);
         return true;
     }
 
@@ -99,7 +109,10 @@ public class StackManagement : MonoBehaviour
     {
         if (_isClickingItem) return;
         if (currentStack == null) return;
+        if (_modalIsTransitioning) return;
         print("HideModal");
+        var seq = DOTween.Sequence();
+        _modalIsTransitioning = true;
         currentStack.transform.SetParent(desktop.transform);
         if (currentStack.stack2.childCount > 0)
         {
@@ -110,17 +123,24 @@ public class StackManagement : MonoBehaviour
         {
             DestroyStack(currentStack);
         }
-        currentStack.transform.DOMove(currentStackStartPos, stackMoveOutDuration)
-            .SetOptions(AxisConstraint.X | AxisConstraint.Y);
+        seq.Append(currentStack.transform.DOMove(currentStackStartPos, stackMoveOutDuration)
+            .SetOptions(AxisConstraint.X | AxisConstraint.Y)
+        );
 
         if (currentStack.TryGetComponent<Draggable>(out var draggable))
         {
             draggable.enabled = true;
         }
-        if (backdropTween != null && backdropTween.IsPlaying()) backdropTween.Kill();
-        backdropTween = backdrop.DOFade(0, backdropFadeOutDuration);
+        if (backdropTween != null && backdropTween.IsActive())
+        {
+            backdropTween.Kill();
+            backdropTween = null;
+        }
+        seq.Join(backdropTween = backdrop.DOFade(0, backdropFadeOutDuration));
         backdrop.GetComponentInChildren<Collider2D>().enabled = false;
 
+
+        seq.OnComplete(() => _modalIsTransitioning = false);
         currentStack = null;
         enabled = false;
     }
@@ -128,6 +148,7 @@ public class StackManagement : MonoBehaviour
     public void HandlePointerPressed(InputAction.CallbackContext context, RaycastHit2D hit, InputAction pointerClick)
     {
         if (currentStack == null) return;
+        if (_modalIsTransitioning) return;
         print("HandlePointerPressed");
         var item = hit.collider.GetComponent<Item>();
         if (item != null && item.enabled)
@@ -154,12 +175,21 @@ public class StackManagement : MonoBehaviour
             print("HandlePointerPressed count back");
             // count back
             var itemTransform = item.transform;
-            itemTransform.SetParent(currentStack.transform, true);
             itemTransform.SetAsLastSibling();
-            item.transform.DOLocalMove(Vector3.zero, stackMoveInDuration)
-                .SetOptions(AxisConstraint.X);
-            item.transform.DOLocalMove(Vector3.zero, stackMoveInDuration)
-                .SetOptions(AxisConstraint.Y);
+            item.GetComponent<Collider2D>().enabled = false;
+            DOTween.Sequence()
+                .Append(item.transform.DOMove(currentStack.transform.position, stackMoveInDuration)
+                    .SetOptions(AxisConstraint.X))
+                .Join(item.transform.DOMove(currentStack.transform.position, stackMoveInDuration)
+                    .SetOptions(AxisConstraint.Y))
+                .Join(item.transform.DORotate(currentStack.transform.rotation.eulerAngles, stackMoveInDuration))
+                .OnComplete(() =>
+                {
+                    itemTransform.SetParent(currentStack.transform, true);
+                    itemTransform.SetAsLastSibling();
+                    item.GetComponent<Collider2D>().enabled = true;
+                });
+            ;
         }
         else if (stack != null && stack.enabled)
         {
@@ -168,10 +198,23 @@ public class StackManagement : MonoBehaviour
             var itemTransform = item.transform;
             itemTransform.SetParent(stack.stack2, true);
             itemTransform.SetAsLastSibling();
-            item.transform.DOLocalMove(Vector3.zero, stackMoveInDuration)
-                .SetOptions(AxisConstraint.X);
-            item.transform.DOLocalMove(Vector3.zero, stackMoveInDuration)
-                .SetOptions(AxisConstraint.Y);
+            item.GetComponent<Collider2D>().enabled = false;
+
+            var ra = item.GetComponent<RandomAppearance>();
+
+            var randomAngles = new Vector3(
+                0, 0,
+                !ra ? 0 : (UnityEngine.Random.value * 2f - 1f) * ra.maxRotate
+            );
+            DOTween.Sequence()
+                .Append(item.transform.DOLocalMove(Vector3.zero, stackMoveInDuration)
+                    .SetOptions(AxisConstraint.X))
+                .Join(item.transform.DOLocalMove(Vector3.zero, stackMoveInDuration)
+                    .SetOptions(AxisConstraint.Y))
+                .Join(item.transform.DOLocalRotate(currentStack.stack2.rotation.eulerAngles + randomAngles,
+                    stackMoveInDuration))
+                .OnComplete(() => { item.GetComponent<Collider2D>().enabled = true; })
+                ;
         }
         else
         {
@@ -222,6 +265,7 @@ public class StackManagement : MonoBehaviour
         foreach (Transform child in stack.stack2.transform.Cast<Transform>().OrderBy(t => t.GetSiblingIndex()))
         {
             child.SetParent(newStack.transform);
+            child.GetComponent<RandomAppearance>().RandomizeLocal();
         }
     }
 

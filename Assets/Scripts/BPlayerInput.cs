@@ -27,6 +27,7 @@ public class BPlayerInput : MonoBehaviour
     {
         _mainCamera = Camera.main;
         if (!stackManagement) stackManagement = FindObjectOfType<StackManagement>(true);
+        stackManagement.gameObject.SetActive(true);
         stackManagement.enabled = false;
     }
 
@@ -103,7 +104,7 @@ public class BPlayerInput : MonoBehaviour
             {
                 if (!isDragging) print("Start dragging");
                 isDragging = true;
-                print("Update DoDragCycle");
+                // print("Update DoDragCycle");
                 var point = offset + pointerPosition;
 
 

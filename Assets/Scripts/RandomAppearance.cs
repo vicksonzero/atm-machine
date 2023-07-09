@@ -20,13 +20,17 @@ public class RandomAppearance : MonoBehaviour
 
     public void RandomizeLocal()
     {
-        if (moveTween != null && moveTween.IsPlaying()) moveTween.Kill();
+        if (moveTween != null && moveTween.IsActive())
+        {
+            moveTween.Kill();
+            moveTween = null;
+        }
 
         Vector3 newPos = Random.insideUnitCircle * maxDisplace;
         newPos.z = transform.localPosition.z;
         moveTween = transform.DOLocalMove(newPos, 0.5f);
 
-        var newAngle = Random.value * maxRotate;
+        var newAngle = (Random.value * 2f - 1f) * maxRotate;
         transform.DOLocalRotate(Vector3.forward * newAngle, 0.5f);
     }
 }
