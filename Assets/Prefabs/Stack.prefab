@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 258899345214364759}
   - component: {fileID: 258899345214364757}
   - component: {fileID: 8281318074751710788}
+  - component: {fileID: 8427499597377187938}
   - component: {fileID: 6365959339273016096}
   - component: {fileID: 258899345214364758}
   - component: {fileID: 258899345214364746}
@@ -61,6 +62,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dropUi: {fileID: 0}
+--- !u!114 &8427499597377187938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 258899345214364753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 838c86d673e3eaf4b9a5b04a04cb4e64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  thickness: 0
 --- !u!114 &6365959339273016096
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -73,7 +87,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1de80217f87fe9d408fb79cc8a4709f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thickness: 0
   itemType: {fileID: 0}
   acceptsTypes: []
   stack2: {fileID: 5494175246377472403}
@@ -127,7 +140,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5494175246377472403}
   - component: {fileID: 2180068448036536381}
-  - component: {fileID: 3999463012057566484}
+  - component: {fileID: 3508962434857386310}
   m_Layer: 6
   m_Name: Stack2
   m_TagString: Untagged
@@ -161,7 +174,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9b66b519ce203443ac9eaa5d64470bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &3999463012057566484
+--- !u!114 &3508962434857386310
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -170,10 +183,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 3391136046216397110}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1de80217f87fe9d408fb79cc8a4709f5, type: 3}
+  m_Script: {fileID: 11500000, guid: 838c86d673e3eaf4b9a5b04a04cb4e64, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   thickness: 0
-  itemType: {fileID: 0}
-  acceptsTypes: []
-  stack2: {fileID: 0}

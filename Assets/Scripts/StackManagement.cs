@@ -1,16 +1,16 @@
-using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 
 public class StackManagement : MonoBehaviour
 {
     public Stack currentStack;
     public Vector3 currentStackStartPos;
-    public Stack desktop; // for its thickness
+    public SortByDisplayList desktop; // for its thickness
+
     [SerializeField]
     private CanvasGroup backdrop;
 
@@ -20,8 +20,6 @@ public class StackManagement : MonoBehaviour
     [SerializeField]
     private float minDragDist = 2;
 
-    private Tween backdropTween;
-
     [SerializeField]
     private Stack stackPrefab;
 
@@ -29,6 +27,7 @@ public class StackManagement : MonoBehaviour
     [SerializeField]
     [Tooltip("In seconds")]
     public float stackMoveInDuration = 0.5f;
+
     [SerializeField]
     [Tooltip("In seconds")]
     public float backdropFadeInDuration = 1f;
@@ -37,6 +36,7 @@ public class StackManagement : MonoBehaviour
     [SerializeField]
     [Tooltip("In seconds")]
     public float stackMoveOutDuration = 0.5f;
+
     [SerializeField]
     [Tooltip("In seconds")]
     public float backdropFadeOutDuration = 0.5f;
@@ -44,6 +44,8 @@ public class StackManagement : MonoBehaviour
     private bool _modalIsTransitioning;
 
     private Camera _mainCamera;
+
+    private HashSet<Tween> _playingTweens = new HashSet<Tween>();
 
     private void Awake()
     {
@@ -93,23 +95,43 @@ public class StackManagement : MonoBehaviour
             draggable.enabled = false;
         }
 
-        if (backdropTween != null && backdropTween.IsActive())
-        {
-            backdropTween.Kill();
-            backdropTween = null;
-        }
-        seq.Join(backdropTween = backdrop.DOFade(1, backdropFadeInDuration).From(0));
+        seq.Join(backdrop.WithTweenHolder().HoldTween(
+            backdrop.DOFade(1, backdropFadeInDuration).From(0),
+            false));
         backdrop.GetComponentInChildren<Collider2D>().enabled = true;
 
         seq.OnComplete(() => _modalIsTransitioning = false);
         return true;
     }
 
+    // Is called by UnityEvent in scene
+    // ReSharper disable once UnusedMember.Global
     public void HideModal()
     {
-        if (_isClickingItem) return;
-        if (currentStack == null) return;
-        if (_modalIsTransitioning) return;
+        if (_isClickingItem)
+        {
+            Debug.Log($"HideModal: _isClickingItem");
+            return;
+        }
+
+        if (currentStack == null)
+        {
+            Debug.Log($"HideModal: currentStack is null?!");
+            return;
+        }
+
+        if (_modalIsTransitioning)
+        {
+            Debug.Log($"HideModal: _modalIsTransitioning");
+            return;
+        }
+
+        if (_playingTweens.Count > 0)
+        {
+            Debug.Log($"HideModal: _playingTweens still has '{_playingTweens.Count}' tweens playing");
+            return;
+        }
+
         print("HideModal");
         var seq = DOTween.Sequence();
         _modalIsTransitioning = true;
@@ -118,11 +140,13 @@ public class StackManagement : MonoBehaviour
         {
             SplitStack(currentStack);
         }
+
         if (currentStack.transform.childCount == 1
             && currentStack.transform.GetChild(0) == currentStack.stack2.transform)
         {
             DestroyStack(currentStack);
         }
+
         seq.Append(currentStack.transform.DOMove(currentStackStartPos, stackMoveOutDuration)
             .SetOptions(AxisConstraint.X | AxisConstraint.Y)
         );
@@ -131,12 +155,10 @@ public class StackManagement : MonoBehaviour
         {
             draggable.enabled = true;
         }
-        if (backdropTween != null && backdropTween.IsActive())
-        {
-            backdropTween.Kill();
-            backdropTween = null;
-        }
-        seq.Join(backdropTween = backdrop.DOFade(0, backdropFadeOutDuration));
+
+        seq.Join(backdrop.WithTweenHolder().HoldTween(
+            backdrop.DOFade(0, backdropFadeOutDuration).From(0),
+            false));
         backdrop.GetComponentInChildren<Collider2D>().enabled = false;
 
 
@@ -177,19 +199,22 @@ public class StackManagement : MonoBehaviour
             var itemTransform = item.transform;
             itemTransform.SetAsLastSibling();
             item.GetComponent<Collider2D>().enabled = false;
-            DOTween.Sequence()
-                .Append(item.transform.DOMove(currentStack.transform.position, stackMoveInDuration)
-                    .SetOptions(AxisConstraint.X))
-                .Join(item.transform.DOMove(currentStack.transform.position, stackMoveInDuration)
-                    .SetOptions(AxisConstraint.Y))
-                .Join(item.transform.DORotate(currentStack.transform.rotation.eulerAngles, stackMoveInDuration))
-                .OnComplete(() =>
-                {
-                    itemTransform.SetParent(currentStack.transform, true);
-                    itemTransform.SetAsLastSibling();
-                    item.GetComponent<Collider2D>().enabled = true;
-                });
-            ;
+            var seq = DOTween.Sequence()
+                    .Append(item.transform.DOMove(currentStack.transform.position, stackMoveInDuration)
+                        .SetOptions(AxisConstraint.X))
+                    .Join(item.transform.DOMove(currentStack.transform.position, stackMoveInDuration)
+                        .SetOptions(AxisConstraint.Y))
+                    .Join(item.transform.DORotate(currentStack.transform.rotation.eulerAngles, stackMoveInDuration))
+                ;
+            _playingTweens.Add(seq);
+
+            seq.OnComplete(() =>
+            {
+                itemTransform.SetParent(currentStack.transform, true);
+                itemTransform.SetAsLastSibling();
+                item.GetComponent<Collider2D>().enabled = true;
+                _playingTweens.Remove(seq);
+            });
         }
         else if (stack != null && stack.enabled)
         {
@@ -206,15 +231,20 @@ public class StackManagement : MonoBehaviour
                 0, 0,
                 !ra ? 0 : (UnityEngine.Random.value * 2f - 1f) * ra.maxRotate
             );
-            DOTween.Sequence()
-                .Append(item.transform.DOLocalMove(Vector3.zero, stackMoveInDuration)
-                    .SetOptions(AxisConstraint.X))
-                .Join(item.transform.DOLocalMove(Vector3.zero, stackMoveInDuration)
-                    .SetOptions(AxisConstraint.Y))
-                .Join(item.transform.DOLocalRotate(currentStack.stack2.rotation.eulerAngles + randomAngles,
-                    stackMoveInDuration))
-                .OnComplete(() => { item.GetComponent<Collider2D>().enabled = true; })
+            var seq = DOTween.Sequence()
+                    .Append(item.transform.DOLocalMove(Vector3.zero, stackMoveInDuration)
+                        .SetOptions(AxisConstraint.X))
+                    .Join(item.transform.DOLocalMove(Vector3.zero, stackMoveInDuration)
+                        .SetOptions(AxisConstraint.Y))
+                    .Join(item.transform.DOLocalRotate(currentStack.stack2.rotation.eulerAngles + randomAngles,
+                        stackMoveInDuration))
                 ;
+            _playingTweens.Add(seq);
+            seq.OnComplete(() =>
+            {
+                item.GetComponent<Collider2D>().enabled = true;
+                _playingTweens.Remove(seq);
+            });
         }
         else
         {

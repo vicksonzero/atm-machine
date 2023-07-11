@@ -1,6 +1,6 @@
 namespace Accounts
 {
-    public class Record
+    public class Transaction
     {
         
     }
