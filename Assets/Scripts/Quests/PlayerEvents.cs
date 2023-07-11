@@ -22,7 +22,17 @@ namespace Quests
 
         public class ScreenShown : IGameEvent
         {
-            public int screenId;
+            public string screenName;
+
+            public ScreenShown(string screenName)
+            {
+                this.screenName = screenName;
+            }
+        }
+
+        public class ButtonPushed : IGameEvent
+        {
+            public int buttonId;
         }
     }
 }

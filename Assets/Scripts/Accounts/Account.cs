@@ -10,6 +10,7 @@ namespace Accounts
         public string accountName;
         public bool isMale;
         public int hairStyle;
+        public int balance;
 
         protected Account(string accountNumber, string accountName, bool isMale, int hairStyle)
         {
