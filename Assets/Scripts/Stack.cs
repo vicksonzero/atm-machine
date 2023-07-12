@@ -29,7 +29,12 @@ public class Stack : MonoBehaviour
     private void InitItemType()
     {
         var item = GetComponentInChildren<Item>();
-        if (item == null) return;
+        if (item == null)
+        {
+            print($"InitItemType: Skipping empty stack");
+            name = $"Empty stack";
+            return;
+        }
         itemType = item.itemType;
         name = $"{itemType.name} stack";
         if (acceptsTypes.Length == 0) acceptsTypes = new[] { itemType };
